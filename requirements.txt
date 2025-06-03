@@ -1,3 +1,5 @@
 fastapi
 uvicorn[standard]
 gunicorn
+python-multipart
+python-jose[cryptography]
