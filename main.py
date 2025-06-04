@@ -59,46 +59,66 @@ def generate_api_key():
 
 @app.get("/items/{item_id}", response_model=ItemResponse)
 def read_item(item_id: int, api_key: str = Depends(get_api_key)):
+    print(f"[READ] Attempting to read item_id: {item_id}")
+    print(f"[READ] items_db current: {items_db}")
     if item_id not in items_db:
+        print(f"[READ] Item {item_id} NOT FOUND in items_db")
         raise HTTPException(status_code=404, detail=f"Item with id {item_id} not found")
     
     item = items_db[item_id]
+    print(f"[READ] Item {item_id} FOUND: {item}")
     return {"id": item_id, **item}
 
 
 @app.post("/items/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(item: Item, api_key: str = Depends(get_api_key)):
+    print(f"[CREATE] Attempting to create item with data: {item}")
+    print(f"[CREATE] items_db before creation: {items_db}")
     # Generate a new ID (in a real app, this would be handled by the database)
-    item_id = len(items_db) + 1
+    item_id = len(items_db) + 1 # Note: This ID generation can lead to reuse if items are deleted.
     item_dict = item.model_dump()
     items_db[item_id] = item_dict
-    
+    print(f"[CREATE] Item {item_id} created: {item_dict}")
+    print(f"[CREATE] items_db after creation: {items_db}")
     return {"id": item_id, **item_dict}
 
 
 @app.get("/items/", response_model=List[ItemResponse])
 def list_items(api_key: str = Depends(get_api_key)):
-    return [{
+    print(f"[LIST] Attempting to list all items")
+    print(f"[LIST] items_db current: {items_db}")
+    result = [{
         "id": item_id,
         **item_data
     } for item_id, item_data in items_db.items()]
+    print(f"[LIST] Returning {len(result)} items.")
+    return result
 
 
 @app.put("/items/{item_id}", response_model=ItemResponse)
 def update_item(item_id: int, item: Item, api_key: str = Depends(get_api_key)):
+    print(f"[UPDATE] Attempting to update item_id: {item_id} with data: {item}")
+    print(f"[UPDATE] items_db before update: {items_db}")
     if item_id not in items_db:
+        print(f"[UPDATE] Item {item_id} NOT FOUND for update")
         raise HTTPException(status_code=404, detail=f"Item with id {item_id} not found")
     
     item_dict = item.model_dump()
     items_db[item_id] = item_dict
-    
+    print(f"[UPDATE] Item {item_id} updated to: {item_dict}")
+    print(f"[UPDATE] items_db after update: {items_db}")
     return {"id": item_id, **item_dict}
 
 
 @app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(item_id: int, api_key: str = Depends(get_api_key)):
+    print(f"[DELETE] Attempting to delete item_id: {item_id}")
+    print(f"[DELETE] items_db before delete: {items_db}")
     if item_id not in items_db:
+        print(f"[DELETE] Item {item_id} NOT FOUND for deletion")
         raise HTTPException(status_code=404, detail=f"Item with id {item_id} not found")
     
     del items_db[item_id]
+    print(f"[DELETE] Item {item_id} DELETED")
+    print(f"[DELETE] items_db after delete: {items_db}")
     return None
